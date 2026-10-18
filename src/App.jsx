@@ -1,19 +1,16 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   ShieldAlert, 
-  Terminal, 
   RefreshCw, 
   Copy, 
   Check, 
   ExternalLink, 
   Download, 
-  Search, 
   Activity, 
   Server, 
   Cpu, 
   Key, 
   Wallet, 
-  AlertTriangle,
   FileCode,
   Info
 } from 'lucide-react';
@@ -31,7 +28,7 @@ export function decodeAddressBytes(rawAddress) {
 
   if (clean.length !== 40) {
     return {
-      error: `Address has ${clean.length} hex chars (expected 40).`,
+      error: `Address length is ${clean.length} hex characters (expected 40).`,
       clean
     };
   }
@@ -98,7 +95,7 @@ export default function App() {
   const copyToClipboard = (text, key) => {
     navigator.clipboard.writeText(text);
     setCopiedKey(key);
-    showToast(`Copied "${text}" to clipboard!`);
+    showToast(`Copied: ${text}`);
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
@@ -137,10 +134,9 @@ export default function App() {
           decoded: decodeAddressBytes(tx.to)
         }));
       } else {
-        throw new Error(data.result || data.message || "Etherscan returned non-OK status");
+        throw new Error(data.result || data.message || "Etherscan non-OK response");
       }
     } catch (err) {
-      console.warn("Etherscan API error, attempting Blockscout fallback:", err);
       // Attempt 2: Blockscout Fallback
       try {
         const bsUrl = `https://eth.blockscout.com/api/v2/addresses/${targetAddress}/transactions`;
@@ -157,8 +153,7 @@ export default function App() {
           }));
         }
       } catch (bsErr) {
-        console.error("Both endpoints failed:", bsErr);
-        showToast("Error retrieving transactions from explorer APIs");
+        showToast("Error retrieving transactions from API endpoints.");
       }
     }
 
@@ -201,7 +196,7 @@ export default function App() {
     const payload = {
       targetWallet: targetAddress,
       generatedAt: new Date().toISOString(),
-      threatCampaign: "NullReceiver (Contagious Interview)",
+      threatCampaign: "NullReceiver",
       activeC2: activeDecoded?.ip1,
       backupC2: activeDecoded?.ip2,
       marker: activeDecoded?.marker,
@@ -213,7 +208,7 @@ export default function App() {
     a.href = url;
     a.download = `nullreceiver-iocs-${Date.now()}.json`;
     a.click();
-    showToast("IoC JSON exported successfully.");
+    showToast("IoC JSON exported.");
   };
 
   const exportCSV = () => {
@@ -230,7 +225,7 @@ export default function App() {
     a.href = url;
     a.download = `nullreceiver-iocs-${Date.now()}.csv`;
     a.click();
-    showToast("IoC CSV exported successfully.");
+    showToast("IoC CSV exported.");
   };
 
   const copySuricataRule = () => {
@@ -245,15 +240,15 @@ export default function App() {
       <header className="glass-panel app-header" id="app-header">
         <div className="header-brand">
           <div className="brand-icon-box">
-            <ShieldAlert size={28} />
+            <ShieldAlert size={26} />
           </div>
           <div>
             <h1 className="brand-title">
-              NullReceiver IoC Sentinel
-              <span className="badge badge-threat">LIVE THREAT MONITOR</span>
+              NullReceiver Monitor
+              <span className="badge badge-threat">MONITORING</span>
             </h1>
             <p className="brand-subtitle">
-              Automated Ethereum On-Chain Dead-Drop Resolver & C2 IP Decoder
+              Ethereum On-Chain Dead-Drop Decoder
             </p>
           </div>
         </div>
@@ -261,7 +256,7 @@ export default function App() {
         <div className="header-controls">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
             <span className="live-pulse"></span>
-            <span>{autoInterval > 0 ? `Auto: ${countdown}s` : 'Paused'}</span>
+            <span>{autoInterval > 0 ? `Interval: ${countdown}s` : 'Paused'}</span>
           </div>
 
           <select 
@@ -274,10 +269,10 @@ export default function App() {
               setCountdown(val);
             }}
           >
-            <option value={10}>Refresh: 10s</option>
-            <option value={30}>Refresh: 30s</option>
-            <option value={60}>Refresh: 60s</option>
-            <option value={0}>Pause Refresh</option>
+            <option value={10}>Interval: 10s</option>
+            <option value={30}>Interval: 30s</option>
+            <option value={60}>Interval: 60s</option>
+            <option value={0}>Pause</option>
           </select>
 
           <button 
@@ -286,8 +281,8 @@ export default function App() {
             onClick={fetchTransactions} 
             disabled={loading}
           >
-            <RefreshCw size={16} className={loading ? "spin-icon" : ""} />
-            {loading ? "Scanning Ledger..." : "Scan Now"}
+            <RefreshCw size={15} className={loading ? "spin-icon" : ""} />
+            {loading ? "Querying Ledger..." : "Refresh"}
           </button>
         </div>
       </header>
@@ -297,7 +292,7 @@ export default function App() {
         <div className="config-inputs">
           <div className="input-group">
             <label className="input-label" htmlFor="target-address-input">
-              <Wallet size={14} /> Monitored Dead-Drop Wallet
+              <Wallet size={13} /> Monitored Operator Wallet
             </label>
             <input 
               id="target-address-input"
@@ -310,7 +305,7 @@ export default function App() {
 
           <div className="input-group">
             <label className="input-label" htmlFor="api-key-input">
-              <Key size={14} /> Etherscan API V2 Key
+              <Key size={13} /> Etherscan API V2 Key
             </label>
             <input 
               id="api-key-input"
@@ -318,7 +313,7 @@ export default function App() {
               className="text-input" 
               value={apiKey} 
               onChange={(e) => setApiKey(e.target.value)}
-              placeholder="Etherscan API Key" 
+              placeholder="API Key" 
             />
           </div>
         </div>
@@ -339,14 +334,14 @@ export default function App() {
         <div className="glass-panel c2-hero-card" id="active-c2-card">
           <div className="card-title-row">
             <div className="card-title">
-              <Server size={18} color="var(--accent-rose)" /> Active Command & Control (C2)
+              <Server size={17} color="var(--accent-rose)" /> Active Command & Control Address
             </div>
-            <span className="badge badge-threat">CRITICAL IOC</span>
+            <span className="badge badge-threat">RESOLVED C2</span>
           </div>
 
           <div className="c2-display-row">
             <div className="c2-ip-main font-mono">
-              {activeDecoded?.ip1 || "Awaiting Scan..."}
+              {activeDecoded?.ip1 || "Pending resolution"}
               {activeDecoded?.ip1 && (
                 <button 
                   id="copy-c2-btn"
@@ -368,7 +363,7 @@ export default function App() {
                 onClick={copySuricataRule}
               >
                 <FileCode size={14} color="var(--accent-cyan)" />
-                {copiedKey === "suricata" ? "Copied Rule!" : "Copy Suricata Rule"}
+                {copiedKey === "suricata" ? "Copied" : "Copy Suricata Rule"}
               </button>
             </div>
           </div>
@@ -377,66 +372,65 @@ export default function App() {
             <div className="stat-item">
               <span className="stat-label">Secondary / Backup C2</span>
               <span className="stat-value font-mono">
-                {activeDecoded?.ip2 || "N/A"}
+                {activeDecoded?.ip2 || "None"}
               </span>
             </div>
             <div className="stat-item">
-              <span className="stat-label">Attacker Tracking Marker</span>
+              <span className="stat-label">Signature Marker</span>
               <span className="stat-value font-mono">
                 <span className="badge badge-marker">
-                  {activeDecoded?.marker || "N/A"}
+                  {activeDecoded?.marker || "None"}
                 </span>
               </span>
             </div>
             <div className="stat-item">
-              <span className="stat-label">Latest Destination Address</span>
+              <span className="stat-label">Recipient Destination Address</span>
               <span className="stat-value font-mono" style={{ fontSize: '0.8rem' }}>
-                {latestOutbound?.to || "N/A"}
+                {latestOutbound?.to || "None"}
               </span>
             </div>
             <div className="stat-item">
-              <span className="stat-label">Last On-Chain Update</span>
+              <span className="stat-label">Last Ledger Timestamp</span>
               <span className="stat-value">
-                {latestOutbound ? new Date(latestOutbound.timeStamp * 1000).toLocaleString() : "Never"}
+                {latestOutbound ? new Date(latestOutbound.timeStamp * 1000).toUTCString() : "None"}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Campaign Intelligence Dossier */}
+        {/* Technical Context */}
         <div className="glass-panel campaign-card" id="campaign-card">
           <div>
             <div className="card-title-row">
               <div className="card-title">
-                <Info size={18} color="var(--accent-cyan)" /> Campaign Dossier
+                <Info size={17} color="var(--accent-cyan)" /> Technical Context
               </div>
-              <span className="badge badge-cyan">THREAT INTEL</span>
+              <span className="badge badge-cyan">DETAILS</span>
             </div>
             <p className="campaign-desc">
-              Threat actors (such as DPRK / Contagious Interview) inject trojanized packages into developer environments. Instead of storing cleartext C2 domains or calldata, the malware queries Ethereum transactions to read the <strong>"To"</strong> destination address of 0-value transactions as a resilient Dead-Drop Resolver.
+              The NullReceiver dead-drop mechanism utilizes zero-value Ethereum transactions to relay command-and-control IP addresses. Backdoors query the recipient address of transactions sent from the designated operator wallet to dynamically reconstruct communication endpoints without embedding cleartext infrastructure.
             </p>
           </div>
 
           <div>
-            <div className="input-label" style={{ marginBottom: '6px' }}>Threat Matrix Identifiers</div>
+            <div className="input-label" style={{ marginBottom: '6px' }}>Classification</div>
             <div className="campaign-tag-list">
               <span className="badge badge-cyan">MITRE ATT&CK: T1102.001</span>
               <span className="badge badge-cyan">Dead-Drop Resolver</span>
-              <span className="badge badge-cyan">Contagious Interview</span>
               <span className="badge badge-marker">Marker: helloipbot!!</span>
-              <span className="badge badge-threat">Supply Chain Backdoor</span>
+              <span className="badge badge-threat">C2 Infrastructure</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Interactive Byte Dissector */}
+      {/* Address Byte Decoder */}
       <section className="glass-panel dissector-card" id="byte-dissector-section">
         <div className="card-title-row">
           <div className="card-title">
-            <Cpu size={18} color="var(--accent-purple)" /> Interactive 20-Byte Address Dissector
+            <Cpu size={17} color="var(--accent-purple)" /> Address Byte Decoder
           </div>
-          <span className="badge badge-marker">REVERSE ENGINEERING TOOL</span>
+          <span className="badge badge-marker">SPECIFICATION</span>
         </div>
 
         <div className="dissector-input-row">
@@ -446,14 +440,14 @@ export default function App() {
             style={{ flex: 1 }}
             value={customInput} 
             onChange={(e) => setCustomInput(e.target.value)} 
-            placeholder="Paste any 20-byte Ethereum address (e.g. 0x67B38e9b67B38E9b68656c6C6f6970626f742121)"
+            placeholder="0x..."
           />
           <button 
             id="reset-dissector-btn"
             className="btn btn-secondary"
             onClick={() => setCustomInput(latestOutbound?.to || "0x67B38e9b67B38E9b68656c6C6f6970626f742121")}
           >
-            Load Latest Address
+            Load Latest
           </button>
         </div>
 
@@ -481,31 +475,31 @@ export default function App() {
             <div className="byte-legend-grid">
               <div className="legend-card" style={{ borderLeft: '3px solid var(--accent-cyan)' }}>
                 <div className="legend-header" style={{ color: 'var(--accent-cyan)' }}>
-                  <span>Primary IPv4 Address</span>
+                  <span>Primary IPv4</span>
                 </div>
                 <div className="legend-detail">{customDecoded.ip1}</div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
-                  Hex octets: {customDecoded.part1Hex.match(/.{1,2}/g)?.join(' ')}
+                  Bytes: {customDecoded.part1Hex.match(/.{1,2}/g)?.join(' ')}
                 </div>
               </div>
 
               <div className="legend-card" style={{ borderLeft: '3px solid var(--accent-emerald)' }}>
                 <div className="legend-header" style={{ color: 'var(--accent-emerald)' }}>
-                  <span>Secondary IPv4 Address</span>
+                  <span>Secondary IPv4</span>
                 </div>
                 <div className="legend-detail">{customDecoded.ip2}</div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
-                  Hex octets: {customDecoded.part2Hex.match(/.{1,2}/g)?.join(' ')}
+                  Bytes: {customDecoded.part2Hex.match(/.{1,2}/g)?.join(' ')}
                 </div>
               </div>
 
               <div className="legend-card" style={{ borderLeft: '3px solid var(--accent-purple)' }}>
                 <div className="legend-header" style={{ color: 'var(--accent-purple)' }}>
-                  <span>ASCII Signature Marker</span>
+                  <span>Signature Marker</span>
                 </div>
                 <div className="legend-detail">"{customDecoded.marker}"</div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
-                  12-byte tracking canary
+                  12-byte tracking string
                 </div>
               </div>
             </div>
@@ -517,14 +511,14 @@ export default function App() {
         )}
       </section>
 
-      {/* Transaction History & IoC Ledger */}
+      {/* Transaction History & Ledger */}
       <section className="glass-panel table-card" id="transactions-ledger-section">
         <div className="card-title-row">
           <div className="card-title">
-            <Activity size={18} color="var(--accent-blue)" /> On-Chain Transaction & IoC Ledger
+            <Activity size={17} color="var(--accent-blue)" /> On-Chain Transactions
           </div>
           <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
-            Showing {transactions.length} recent transactions
+            {transactions.length} recorded transactions
           </div>
         </div>
 
@@ -535,10 +529,10 @@ export default function App() {
                 <th>Timestamp (UTC)</th>
                 <th>Tx Hash</th>
                 <th>Direction</th>
-                <th>"To" Destination Address</th>
-                <th>Resolved Primary C2</th>
-                <th>Resolved Backup C2</th>
-                <th>Marker Signature</th>
+                <th>Destination Address</th>
+                <th>Primary C2</th>
+                <th>Backup C2</th>
+                <th>Signature Marker</th>
                 <th>Action</th>
               </tr>
             </thead>
@@ -546,7 +540,7 @@ export default function App() {
               {transactions.length === 0 ? (
                 <tr>
                   <td colSpan={8} style={{ textAlign: 'center', padding: '30px', color: 'var(--text-dim)' }}>
-                    {loading ? "Querying Ethereum ledger..." : "No transactions found or verified."}
+                    {loading ? "Querying ledger..." : "No transactions found."}
                   </td>
                 </tr>
               ) : (
@@ -578,12 +572,12 @@ export default function App() {
                       <td className="font-mono">
                         {d?.ip1 ? (
                           <span style={{ color: 'var(--accent-cyan)', fontWeight: 600 }}>{d.ip1}</span>
-                        ) : "N/A"}
+                        ) : "None"}
                       </td>
                       <td className="font-mono">
                         {d?.ip2 ? (
                           <span style={{ color: 'var(--accent-emerald)' }}>{d.ip2}</span>
-                        ) : "N/A"}
+                        ) : "None"}
                       </td>
                       <td>
                         {d?.marker ? (
@@ -600,7 +594,7 @@ export default function App() {
                               window.scrollTo({ top: 350, behavior: 'smooth' });
                             }}
                           >
-                            Dissect
+                            Decode
                           </button>
                         )}
                       </td>
@@ -613,18 +607,17 @@ export default function App() {
         </div>
       </section>
 
-      {/* Toast Notification */}
+      {/* Toast */}
       {toastMsg && (
         <div className="toast-msg">
-          <Check size={18} color="var(--accent-cyan)" />
+          <Check size={16} color="var(--accent-cyan)" />
           <span>{toastMsg}</span>
         </div>
       )}
 
       {/* Footer */}
       <footer className="app-footer">
-        <div>NullReceiver Threat Intelligence Sentinel • Autonomous Blockchain IoC Monitor</div>
-        <div style={{ marginTop: '4px', opacity: 0.6 }}>Designed for Incident Response, SOC Operations & Threat Hunting</div>
+        <div>NullReceiver Monitor &bull; Ethereum Dead-Drop Decoder</div>
       </footer>
     </div>
   );
