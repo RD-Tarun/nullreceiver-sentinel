@@ -19,6 +19,21 @@ import './App.css';
 const DEFAULT_TARGET_ADDRESS = "0xa322E5f3D311D3080e6f0121063e9aDC2490Ef1a";
 const DEFAULT_API_KEY = "PMEHZSC3FV9KFMGPINSRQIABKXTMVX29T5";
 
+export function formatIST(timestampSeconds) {
+  if (!timestampSeconds) return "None";
+  const date = new Date(timestampSeconds * 1000);
+  return date.toLocaleString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  }) + ' IST';
+}
+
 export function decodeAddressBytes(rawAddress) {
   if (!rawAddress) return null;
   let clean = rawAddress.trim();
@@ -211,7 +226,22 @@ export default function App() {
     showToast("IoC JSON exported.");
   };
 
-
+  const exportCSV = () => {
+    const headers = ["Timestamp_IST", "Tx_Hash", "From_Address", "To_Address", "Primary_C2_IP", "Secondary_C2_IP", "Marker"];
+    const rows = transactions.map(t => {
+      const d = t.decoded;
+      const ts = formatIST(t.timeStamp);
+      return `"${ts}","${t.hash}","${t.from}","${t.to}","${d?.ip1 || ''}","${d?.ip2 || ''}","${d?.marker || ''}"`;
+    });
+    const csvContent = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `nullreceiver-iocs-${Date.now()}.csv`;
+    a.click();
+    showToast("IoC CSV exported.");
+  };
 
   const copySuricataRule = () => {
     if (!activeDecoded?.ip1) return;
@@ -227,7 +257,16 @@ export default function App() {
           <div className="brand-icon-box">
             <ShieldAlert size={26} />
           </div>
-
+          <div>
+            <h1 className="brand-title">
+              NullReceiver Monitor
+              <span className="badge badge-cyan" style={{ fontSize: '0.72rem', letterSpacing: '0.04em' }}>by RDT</span>
+              <span className="badge badge-threat">MONITORING</span>
+            </h1>
+            <p className="brand-subtitle">
+              Ethereum On-Chain Dead-Drop Decoder &bull; by RDT
+            </p>
+          </div>
         </div>
 
         <div className="header-controls">
@@ -366,7 +405,12 @@ export default function App() {
                 {latestOutbound?.to || "None"}
               </span>
             </div>
-
+            <div className="stat-item">
+              <span className="stat-label">Last Ledger Timestamp</span>
+              <span className="stat-value">
+                {latestOutbound ? formatIST(latestOutbound.timeStamp) : "None"}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -498,7 +542,7 @@ export default function App() {
           <table className="ioc-table">
             <thead>
               <tr>
-
+                <th>Timestamp (IST)</th>
                 <th>Tx Hash</th>
                 <th>Direction</th>
                 <th>Destination Address</th>
@@ -521,7 +565,7 @@ export default function App() {
                   const isOutbound = tx.from.toLowerCase() === targetAddress.toLowerCase();
                   return (
                     <tr key={tx.hash || idx}>
-
+                      <td>{formatIST(tx.timeStamp)}</td>
                       <td>
                         <a 
                           href={`https://etherscan.io/tx/${tx.hash}`} 
@@ -587,7 +631,10 @@ export default function App() {
         </div>
       )}
 
-
+      {/* Footer */}
+      <footer className="app-footer">
+        <div>NullReceiver Monitor &bull; Developed by RDT &bull; Ethereum Dead-Drop Decoder</div>
+      </footer>
     </div>
   );
 }
