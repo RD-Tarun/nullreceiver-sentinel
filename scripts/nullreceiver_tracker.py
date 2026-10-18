@@ -113,7 +113,8 @@ def poll_once(wallet_address: str, api_key: str) -> Optional[Dict[str, Any]]:
     
     try:
         ts_int = int(raw_ts)
-        ts_str = datetime.datetime.fromtimestamp(ts_int, tz=datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+        ist_tz = datetime.timezone(datetime.timedelta(hours=5, minutes=30), name="IST")
+        ts_str = datetime.datetime.fromtimestamp(ts_int, tz=ist_tz).strftime('%Y-%m-%d %H:%M:%S IST')
     except Exception:
         ts_str = str(raw_ts)
 
@@ -147,12 +148,12 @@ def main():
         if data:
             if data["tx_hash"] != last_tx_hash:
                 last_tx_hash = data["tx_hash"]
-                print(f"[UPDATE] Timestamp: {data['timestamp']}")
-                print(f"         Tx Hash:   {data['tx_hash']}")
-                print(f"         To:        {data['to_address']}")
-                print(f"         Primary:   {data['primary_ip']}")
-                print(f"         Backup:    {data['secondary_ip']}")
-                print(f"         Marker:    {data['marker']}")
+                print(f"[UPDATE] Timestamp (IST): {data['timestamp']}")
+                print(f"         Tx Hash:         {data['tx_hash']}")
+                print(f"         To:              {data['to_address']}")
+                print(f"         Primary:         {data['primary_ip']}")
+                print(f"         Backup:          {data['secondary_ip']}")
+                print(f"         Marker:          {data['marker']}")
 
                 if args.output_json:
                     try:

@@ -211,22 +211,7 @@ export default function App() {
     showToast("IoC JSON exported.");
   };
 
-  const exportCSV = () => {
-    const headers = ["Timestamp_UTC", "Tx_Hash", "From_Address", "To_Address", "Primary_C2_IP", "Secondary_C2_IP", "Marker"];
-    const rows = transactions.map(t => {
-      const d = t.decoded;
-      const ts = new Date(t.timeStamp * 1000).toISOString();
-      return `"${ts}","${t.hash}","${t.from}","${t.to}","${d?.ip1 || ''}","${d?.ip2 || ''}","${d?.marker || ''}"`;
-    });
-    const csvContent = [headers.join(","), ...rows].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `nullreceiver-iocs-${Date.now()}.csv`;
-    a.click();
-    showToast("IoC CSV exported.");
-  };
+
 
   const copySuricataRule = () => {
     if (!activeDecoded?.ip1) return;
@@ -389,12 +374,7 @@ export default function App() {
                 {latestOutbound?.to || "None"}
               </span>
             </div>
-            <div className="stat-item">
-              <span className="stat-label">Last Ledger Timestamp</span>
-              <span className="stat-value">
-                {latestOutbound ? new Date(latestOutbound.timeStamp * 1000).toUTCString() : "None"}
-              </span>
-            </div>
+
           </div>
         </div>
 
@@ -526,7 +506,7 @@ export default function App() {
           <table className="ioc-table">
             <thead>
               <tr>
-                <th>Timestamp (UTC)</th>
+
                 <th>Tx Hash</th>
                 <th>Direction</th>
                 <th>Destination Address</th>
@@ -549,7 +529,7 @@ export default function App() {
                   const isOutbound = tx.from.toLowerCase() === targetAddress.toLowerCase();
                   return (
                     <tr key={tx.hash || idx}>
-                      <td>{new Date(tx.timeStamp * 1000).toUTCString()}</td>
+
                       <td>
                         <a 
                           href={`https://etherscan.io/tx/${tx.hash}`} 
