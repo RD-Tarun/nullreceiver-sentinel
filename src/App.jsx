@@ -9,15 +9,12 @@ import {
   Activity, 
   Server, 
   Cpu, 
-  Key, 
-  Wallet, 
   FileCode,
   Info
 } from 'lucide-react';
 import './App.css';
 
 const DEFAULT_TARGET_ADDRESS = "0xa322E5f3D311D3080e6f0121063e9aDC2490Ef1a";
-const DEFAULT_API_KEY = "PMEHZSC3FV9KFMGPINSRQIABKXTMVX29T5";
 
 export function formatIST(timestampSeconds) {
   if (!timestampSeconds) return "None";
@@ -85,9 +82,6 @@ export default function App() {
   const [targetAddress, setTargetAddress] = useState(
     () => localStorage.getItem("ioc_target_addr") || DEFAULT_TARGET_ADDRESS
   );
-  const [apiKey, setApiKey] = useState(
-    () => localStorage.getItem("ioc_etherscan_key") || DEFAULT_API_KEY
-  );
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -119,10 +113,6 @@ export default function App() {
     localStorage.setItem("ioc_target_addr", targetAddress);
   }, [targetAddress]);
 
-  useEffect(() => {
-    localStorage.setItem("ioc_etherscan_key", apiKey);
-  }, [apiKey]);
-
   // Update dissector on input change
   useEffect(() => {
     setCustomDecoded(decodeAddressBytes(customInput));
@@ -133,26 +123,28 @@ export default function App() {
     setLoading(true);
     let items = [];
 
-    // Attempt 1: Etherscan API V2
+    // Attempt 1: Secure Serverless Proxy (hides API keys on backend)
     try {
-      const url = `https://api.etherscan.io/v2/api?chainid=1&module=account&action=txlist&address=${targetAddress}&startblock=0&endblock=99999999&page=1&offset=15&sort=desc&apikey=${apiKey}`;
-      const res = await fetch(url);
-      const data = await res.json();
-
-      if (data.status === "1" && Array.isArray(data.result)) {
-        items = data.result.map(tx => ({
-          hash: tx.hash,
-          from: tx.from,
-          to: tx.to,
-          timeStamp: parseInt(tx.timeStamp, 10),
-          value: tx.value,
-          decoded: decodeAddressBytes(tx.to)
-        }));
-      } else {
-        throw new Error(data.result || data.message || "Etherscan non-OK response");
+      const res = await fetch(`/api/transactions?address=${targetAddress}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.status === "1" && Array.isArray(data.result)) {
+          items = data.result.map(tx => ({
+            hash: tx.hash,
+            from: tx.from,
+            to: tx.to,
+            timeStamp: parseInt(tx.timeStamp, 10),
+            value: tx.value,
+            decoded: decodeAddressBytes(tx.to)
+          }));
+        }
       }
-    } catch (err) {
-      // Attempt 2: Blockscout Fallback
+    } catch {
+      // Fallback to public explorer
+    }
+
+    // Attempt 2: Public Blockscout API (Zero credentials required)
+    if (items.length === 0) {
       try {
         const bsUrl = `https://eth.blockscout.com/api/v2/addresses/${targetAddress}/transactions`;
         const bsRes = await fetch(bsUrl);
@@ -176,7 +168,7 @@ export default function App() {
     setLoading(false);
     setLastUpdated(new Date());
     setCountdown(autoInterval);
-  }, [targetAddress, apiKey, autoInterval]);
+  }, [targetAddress, autoInterval]);
 
   // Initial fetch
   useEffect(() => {
@@ -302,46 +294,6 @@ export default function App() {
         </div>
       </header>
 
-      {/* Configuration Bar */}
-      <section className="glass-panel config-bar" id="config-bar">
-        <div className="config-inputs">
-          <div className="input-group">
-            <label className="input-label" htmlFor="target-address-input">
-              <Wallet size={13} /> Monitored Operator Wallet
-            </label>
-            <input 
-              id="target-address-input"
-              className="text-input" 
-              value={targetAddress} 
-              onChange={(e) => setTargetAddress(e.target.value)}
-              placeholder="0x..." 
-            />
-          </div>
-
-          <div className="input-group">
-            <label className="input-label" htmlFor="api-key-input">
-              <Key size={13} /> Etherscan API V2 Key
-            </label>
-            <input 
-              id="api-key-input"
-              type="password"
-              className="text-input" 
-              value={apiKey} 
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="API Key" 
-            />
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button id="export-json-btn" className="btn btn-secondary" onClick={exportJSON}>
-            <Download size={14} /> Export JSON
-          </button>
-          <button id="export-csv-btn" className="btn btn-secondary" onClick={exportCSV}>
-            <Download size={14} /> Export CSV
-          </button>
-        </div>
-      </section>
 
       {/* Hero Grid */}
       <section className="hero-grid">
@@ -532,8 +484,16 @@ export default function App() {
           <div className="card-title">
             <Activity size={17} color="var(--accent-blue)" /> On-Chain Transactions
           </div>
-          <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>
-            {transactions.length} recorded transactions
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)', marginRight: '4px' }}>
+              {transactions.length} recorded transactions
+            </span>
+            <button id="export-json-btn" className="btn btn-secondary" style={{ padding: '5px 10px', fontSize: '0.78rem' }} onClick={exportJSON}>
+              <Download size={13} /> Export JSON
+            </button>
+            <button id="export-csv-btn" className="btn btn-secondary" style={{ padding: '5px 10px', fontSize: '0.78rem' }} onClick={exportCSV}>
+              <Download size={13} /> Export CSV
+            </button>
           </div>
         </div>
 

@@ -12,9 +12,10 @@ import argparse
 import datetime
 import urllib.request
 import urllib.parse
+import os
 from typing import Optional, Dict, Any, List
 
-ETHERSCAN_API_KEY = "PMEHZSC3FV9KFMGPINSRQIABKXTMVX29T5"
+ETHERSCAN_API_KEY = os.getenv("ETHERSCAN_API_KEY", "")
 DEFAULT_TARGET_ADDRESS = "0xa322E5f3D311D3080e6f0121063e9aDC2490Ef1a"
 
 def decode_address_to_ip(raw_address: str) -> Dict[str, Any]:
