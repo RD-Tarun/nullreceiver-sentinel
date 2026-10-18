@@ -120,6 +120,4 @@ alert ip any any -> 103.179.142.155 any (msg:"ET MALWARE DPRK Contagious Intervi
 
 ---
 
-## License
 
-MIT
