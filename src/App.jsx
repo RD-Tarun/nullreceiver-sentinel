@@ -257,16 +257,7 @@ export default function App() {
           <div className="brand-icon-box">
             <ShieldAlert size={26} />
           </div>
-          <div>
-            <h1 className="brand-title">
-              NullReceiver Monitor
-              <span className="badge badge-cyan" style={{ fontSize: '0.72rem', letterSpacing: '0.04em' }}>by RDT</span>
-              <span className="badge badge-threat">MONITORING</span>
-            </h1>
-            <p className="brand-subtitle">
-              Ethereum On-Chain Dead-Drop Decoder &bull; by RDT
-            </p>
-          </div>
+
         </div>
 
         <div className="header-controls">
