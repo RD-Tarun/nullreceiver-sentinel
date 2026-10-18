@@ -291,6 +291,14 @@ export default function App() {
             <RefreshCw size={15} className={loading ? "spin-icon" : ""} />
             {loading ? "Querying Ledger..." : "Refresh"}
           </button>
+
+          <button id="export-json-header-btn" className="btn btn-secondary" onClick={exportJSON}>
+            <Download size={13} /> Export JSON
+          </button>
+
+          <button id="export-csv-header-btn" className="btn btn-secondary" onClick={exportCSV}>
+            <Download size={13} /> Export CSV
+          </button>
         </div>
       </header>
 
